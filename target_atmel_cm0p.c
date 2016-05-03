@@ -44,6 +44,9 @@
 #define DSU_CTRL_STATUS        0x41002100
 #define DSU_DID                0x41002118
 
+#define NVM_USER_ROW0           0x00804000
+#define NVM_USER_ROW1           0x00804004
+
 /*- Types -------------------------------------------------------------------*/
 typedef struct
 {
@@ -126,6 +129,61 @@ static void target_erase(void)
 }
 
 //-----------------------------------------------------------------------------
+/*
+static void target_set_user_row_mapping(uint32_t map[2])
+{
+    verbose("Setting User Row Mapping... ");
+
+    //0xD8E0C7FF
+    //0xFFFFFF5D
+
+    target_erase();
+    while (0 == (dap_read_word(0x41004014) & 1));
+
+    dap_write_word(0x41004018, 1<<2);  // Clear PROGE
+
+    dap_write_word(0x4100401C, NVM_USER_ROW0>>1); // Set the address
+    check(0 == (dap_read_word(0x41004018) & (1<<2)), "failed to set address");
+    while (0 == (dap_read_word(0x41004014) & 1));
+
+    dap_write_word(0x41004000, 0x0000a541); // Unlock Region
+    check(0 == (dap_read_word(0x41004018) & (1<<2)), "failed to unlock aux region");
+    while (0 == (dap_read_word(0x41004014) & 1));
+    dap_write_word(0x41004000, 0x0000a505); // Erase Row
+    check(0 == (dap_read_word(0x41004018) & (1<<2)), "failed to erase aux region");
+    while (0 == (dap_read_word(0x41004014) & 1));
+    dap_write_word(0x41004000, 0x0000a544); // Buffer Clear
+    check(0 == (dap_read_word(0x41004018) & (1<<2)), "failed to clear the write buffer");
+    while (0 == (dap_read_word(0x41004014) & 1));
+
+    dap_write_word(NVM_USER_ROW0, map[0]); // Write User Row 0
+    check(0 == (dap_read_word(0x41004018) & (1<<2)), "failed writing to the buffer");
+    while (0 == (dap_read_word(0x41004014) & 1));
+
+    dap_write_word(NVM_USER_ROW1, map[1]); // Write User Row 1
+    check(0 == (dap_read_word(0x41004018) & (1<<2)), "failed writing to the buffer");
+    while (0 == (dap_read_word(0x41004014) & 1));
+
+    dap_write_word(0x41004000, 0x0000a506); // Write Aux Row
+    check(0 == (dap_read_word(0x41004018) & (1<<2)), "failed to write out buffer");
+    while (0 == (dap_read_word(0x41004014) & 1));
+
+}
+*/
+//-----------------------------------------------------------------------------
+/*
+static void target_get_user_row_mapping(uint32_t *map)
+{
+    uint32_t b;
+    b = dap_read_word(NVM_USER_ROW0); // Set Security Bit
+    printf("U: %08X\r\n", b);
+    b = dap_read_word(NVM_USER_ROW1); // Set Security Bit
+    printf("U: %08X\r\n", b);
+
+    verbose("done.\n");
+}
+*/
+//-----------------------------------------------------------------------------
 static void target_lock(void)
 {
   verbose("Locking... ");
@@ -146,7 +204,6 @@ static void target_program(char *name, uint32_t offset)
 
   if (dap_read_word(DSU_CTRL_STATUS) & 0x00010000)
     error_exit("devices is locked, perform a chip erase before programming");
-
 
   buf = buf_alloc(device->flash_size);
 
