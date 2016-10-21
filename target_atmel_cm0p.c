@@ -63,18 +63,22 @@ typedef struct
 static device_t devices[] =
 {
   { 0x10020100, "SAM D10D14AM",      0,  16*1024, 64,  256, 256 },
+  { 0x10030100, "SAM D11D14A",       0,  16*1024, 64,  256, 256 },
   { 0x10030000, "SAM D11D14AM",      0,  16*1024, 64,  256, 256 },
   { 0x10030003, "SAM D11D14AS",      0,  16*1024, 64,  256, 256 },
   { 0x10030006, "SAM D11C14A",       0,  16*1024, 64,  256, 256 },
   { 0x10001100, "SAM D20J18A",       0, 256*1024, 64, 4096, 256 },
+  { 0x10001200, "SAM D20J18A Rev C", 0, 256*1024, 64, 4096, 256 },
   { 0x10010100, "SAM D21J18A",       0, 256*1024, 64, 4096, 256 },
   { 0x10010200, "SAM D21J18A Rev C", 0, 256*1024, 64, 4096, 256 },
   { 0x10010300, "SAM D21J18A Rev D", 0, 256*1024, 64, 4096, 256 },
   { 0x10010205, "SAM D21G18A",       0, 256*1024, 64, 4096, 256 },
+  { 0x10010305, "SAM D21G18A Rev D", 0, 256*1024, 64, 4096, 256 },
   { 0x10010019, "SAM R21G18 ES",     0, 256*1024, 64, 4096, 256 },
   { 0x10010119, "SAM R21G18",        0, 256*1024, 64, 4096, 256 },
   { 0x10010219, "SAM R21G18 A",      0, 256*1024, 64, 4096, 256 },
   { 0x11010100, "SAM C21J18A ES",    0, 256*1024, 64, 4096, 256 },
+
 
   { 0, "", 0, 0, 0, 0, 0 },
 };
@@ -129,8 +133,8 @@ static void target_erase(void)
 {
   dap_write_word(DSU_CTRL_STATUS, 0x00001f00); // Clear flags
   dap_write_word(DSU_CTRL_STATUS, 0x00000010); // Chip erase
-  usleep(100000);
-  while (0 == (dap_read_word(0x41002100) & 0x00000100));
+  sleep_ms(100);
+  while (0 == (dap_read_word(DSU_CTRL_STATUS) & 0x00000100));
 }
 
 //-----------------------------------------------------------------------------
@@ -204,7 +208,7 @@ static void target_program(void)
   uint32_t size = target_options.file_size;
 
   if (dap_read_word(DSU_CTRL_STATUS) & 0x00010000)
-    error_exit("devices is locked, perform a chip erase before programming");
+    error_exit("device is locked, perform a chip erase before programming");
 
   number_of_rows = (size + target_device.row_size - 1) / target_device.row_size;
 
@@ -240,7 +244,7 @@ static void target_verify(void)
   uint32_t size = target_options.file_size;
 
   if (dap_read_word(DSU_CTRL_STATUS) & 0x00010000)
-    error_exit("devices is locked, unable to verify");
+    error_exit("device is locked, unable to verify");
 
   bufb = buf_alloc(target_device.row_size);
 
@@ -280,7 +284,7 @@ static void target_read(void)
   uint32_t size = target_options.size;
 
   if (dap_read_word(DSU_CTRL_STATUS) & 0x00010000)
-    error_exit("devices is locked, unable to read");
+    error_exit("device is locked, unable to read");
 
   while (size)
   {
